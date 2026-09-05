@@ -46,7 +46,7 @@ export function toAppRole(role?: string | null): string {
   if (normalized === 'courier' || normalized === 'kurir') return 'kurir';
   if (normalized === 'customer' || normalized === 'konsumen_umum') return 'konsumen_umum';
   if (normalized === 'waste_processor' || normalized === 'pengolah_energi') return 'pengolah_energi';
-  if (normalized === 'beneficiary' || normalized === 'konsumen_panti') return 'konsumen_panti';
+  if (normalized === 'organization' || normalized === 'beneficiary' || normalized === 'konsumen_panti') return 'konsumen_panti';
 
   return normalized;
 }

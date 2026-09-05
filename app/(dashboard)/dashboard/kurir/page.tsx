@@ -303,6 +303,7 @@ export default function HalamanDashboardKurir() {
   const [statusPerjalanan, setStatusPerjalanan] = useState("siap");
   const [persentaseRute, setPersentaseRute] = useState(32);
   const [lokasiKurir, setLokasiKurir] = useState<[number, number] | null>(null);
+  const [misiSedangDiambil, setMisiSedangDiambil] = useState<string | null>(null);
 
   // Waktu misi yang belum diambil terus berkurang setiap detik.
   useEffect(() => {
@@ -383,37 +384,37 @@ export default function HalamanDashboardKurir() {
 
   // --- AKSI UTAMA KURIR ---
   const tanganiAmbilMisi = async (misi: MisiKurir) => {
-    // Tandai misi sebagai diambil dan simpan ID kurir yang mengerjakannya.
-    const { data: { user } } = await supabase.auth.getUser();
-    const kurirId = user?.id ?? null;
+    if (misiSedangDiambil || misiSedangBerjalan) return;
+    setMisiSedangDiambil(misi.idMisi);
 
-    const { error: errorMisi } = await supabase
-      .from('misi_kurir')
-      .update({ status: 'diambil', kurir_id: kurirId })
-      .eq('id', misi.idMisi);
-
-    if (errorMisi) {
-      console.error('Gagal ambil misi:', errorMisi);
-      return;
-    }
-
-    if (misi.pesanan_id) {
-      // Pesanan ikut diperbarui supaya status di sisi penerima tetap sinkron.
-      const { error: errorPesanan } = await supabase
-        .from('pesanan')
-        .update({
-          status: 'sedang_diantar',
-          kurir_id: kurirId,
-        })
-        .eq('id', misi.pesanan_id);
-
-      if (errorPesanan) {
-        console.error('Gagal update status pesanan saat ambil misi:', errorPesanan);
-      }
-    }
-
+    // Optimistic UI membuat rute langsung terbuka, lalu database memvalidasi claim.
     setMisiSedangBerjalan(misi);
-    setDaftarMisi((prev) => prev.filter((m) => m.idMisi !== misi.idMisi));
+    setDaftarMisi((prev) => prev.filter((item) => item.idMisi !== misi.idMisi));
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Sesi kurir tidak ditemukan. Silakan login ulang.');
+
+      const updateMisi = supabase
+        .from('misi_kurir')
+        .update({ status: 'diambil', kurir_id: user.id })
+        .eq('id', misi.idMisi)
+        .eq('status', 'terbuka')
+        .select('id')
+        .single();
+      const updatePesanan = misi.pesanan_id
+        ? supabase.from('pesanan').update({ status: 'sedang_diantar', kurir_id: user.id }).eq('id', misi.pesanan_id)
+        : Promise.resolve({ error: null });
+      const [{ data: misiTersimpan, error: errorMisi }, { error: errorPesanan }] = await Promise.all([updateMisi, updatePesanan]);
+
+      if (errorMisi || !misiTersimpan) throw new Error(errorMisi?.message || 'Misi sudah diambil kurir lain.');
+      if (errorPesanan) console.error('Gagal update status pesanan saat ambil misi:', errorPesanan.message);
+    } catch (error) {
+      setMisiSedangBerjalan(null);
+      setDaftarMisi((prev) => [misi, ...prev]);
+      console.error('Gagal ambil misi:', error instanceof Error ? error.message : String(error));
+    } finally {
+      setMisiSedangDiambil(null);
+    }
   };
 
   const ambilTujuanRute = (jenisTujuan = "jemput") => {
@@ -523,11 +524,25 @@ export default function HalamanDashboardKurir() {
     const { data: imbalanDibayar, error } = await supabase.rpc('selesaikan_misi_kurir', {
       p_misi_id: misiSedangBerjalan.idMisi,
     });
-    if (error) {
-      console.error('Gagal mencatat upah kurir:', error);
-      return;
-    }
     const imbalanNilai = Number(imbalanDibayar) || parseRupiah(misiSedangBerjalan.imbalan);
+    if (error) {
+      // Fallback untuk project Supabase yang belum memiliki RPC tersebut.
+      console.error('Gagal mencatat upah kurir:', error.message || String(error));
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+      const { error: errorUpah } = await supabase.from('courier_earnings').insert({
+        courier_id: user.id,
+        amount: imbalanNilai,
+      });
+      const { error: errorMisi } = await supabase.from('misi_kurir').update({ status: 'selesai' }).eq('id', misiSedangBerjalan.idMisi);
+      if (errorUpah || errorMisi) {
+        console.error('Gagal menyelesaikan misi:', errorUpah?.message || errorMisi?.message || 'Periksa tabel courier_earnings dan status misi.');
+        return;
+      }
+      if (misiSedangBerjalan.pesanan_id) {
+        await supabase.from('pesanan').update({ status: 'selesai' }).eq('id', misiSedangBerjalan.pesanan_id);
+      }
+    }
 
     setSaldo((prev) => prev + imbalanNilai);
     setMisiSelesai((prev) => [...prev, misiSedangBerjalan]);
@@ -1190,10 +1205,11 @@ export default function HalamanDashboardKurir() {
                               whileHover={{ scale: 1.05, boxShadow: "0 15px 50px rgba(16, 185, 129, 0.4)" }}
                               whileTap={{ scale: 0.95 }}
                               onClick={() => tanganiAmbilMisi(misi)}
-                              className={`${temaWarna.tombolBg} text-white px-7 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg ${temaWarna.glowColor} flex items-center gap-2.5`}
+                              disabled={misiSedangDiambil === misi.idMisi || Boolean(misiSedangBerjalan)}
+                              className={`${temaWarna.tombolBg} text-white px-7 py-3.5 rounded-xl text-sm font-bold transition-all duration-300 shadow-lg ${temaWarna.glowColor} flex items-center gap-2.5 disabled:cursor-wait disabled:opacity-60`}
                             >
-                              <Bike className="w-4 h-4" />
-                              <span>Ambil Misi</span>
+                              <Bike className={`w-4 h-4 ${misiSedangDiambil === misi.idMisi ? 'animate-pulse' : ''}`} />
+                              <span>{misiSedangDiambil === misi.idMisi ? 'Memproses...' : 'Ambil Misi'}</span>
                               <ArrowRight className="w-4 h-4" />
                             </motion.button>
                           </div>

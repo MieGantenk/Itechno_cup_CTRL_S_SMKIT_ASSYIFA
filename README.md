@@ -17,7 +17,9 @@
 ## 📋 Daftar Isi
 
 - [Tentang Proyek](#-tentang-proyek)
+- [Role dan Fitur](#-role-dan-fitur)
 - [Fitur Unggulan](#-fitur-unggulan)
+- [Screenshot Aplikasi](#-screenshot-aplikasi)
 - [Teknologi](#️-teknologi)
 - [Arsitektur Sistem](#️-arsitektur-sistem)
 - [Instalasi dan Setup](#️-instalasi--setup)
@@ -38,6 +40,86 @@ Platform ini menghadirkan model pengelolaan sisa makanan berbasis role dan alur 
 
 ### Tujuan Proyek
 
+## 👥 Role dan Fitur
+
+Platform ini dibuat untuk beberapa pihak yang saling terhubung. Setiap role memiliki tugas dan tampilan yang berbeda, sehingga makanan surplus bisa bergerak dari merchant ke penerima yang tepat atau ke mitra pengolah energi.
+
+### 1. Admin
+
+Admin bertugas menjaga data pengguna dan memastikan ekosistem berjalan dengan baik.
+
+- Melihat seluruh pengguna yang terdaftar.
+- Mencari dan memfilter pengguna berdasarkan nama, email, atau role.
+- Mengubah role pengguna, misalnya menjadi merchant, organisasi/panti, konsumen, kurir, atau pengolah energi.
+- Melihat ringkasan jumlah pengguna, merchant, dan organisasi/panti.
+- Memantau data transaksi melalui halaman transaksi admin.
+
+### 2. Merchant atau Mitra Kuliner
+
+Merchant adalah restoran, kafe, bakery, hotel, atau usaha kuliner lain yang memiliki makanan surplus. Merchant dapat menentukan jalur terbaik untuk setiap makanan.
+
+- Menambahkan makanan surplus lengkap dengan stok, waktu masak, lokasi, dan batas kedaluwarsa.
+- Mengelompokkan makanan ke dalam tiga tier:
+  - **Tier 1:** dijual dengan harga diskon, sekitar 50-70% lebih murah.
+  - **Tier 2:** disalurkan sebagai donasi untuk panti atau warga yang membutuhkan.
+  - **Tier 3:** dikirim ke mitra pengolah untuk dijadikan biogas, kompos, atau pakan maggot BSF.
+- Melihat status stok dan pesanan yang sedang berjalan.
+- Menampilkan QR Code handover untuk dipindai kurir saat mengambil makanan.
+- Melacak alur serah terima dari QR aktif, dipindai, diambil, sampai terkirim.
+- Menerima notifikasi ketika makanan dipesan, diambil, atau sudah diterima.
+
+### 3. Konsumen Umum
+
+Konsumen umum dapat membeli makanan surplus yang masih layak makan dengan harga lebih terjangkau.
+
+- Melihat makanan Tier 1 di peta berdasarkan lokasi dan jarak.
+- Melihat informasi merchant, stok, harga diskon, dan jarak dari lokasi konsumen.
+- Memilih jumlah porsi dan membuat pesanan.
+- Melihat rincian harga makanan, upah kurir, dan total pembayaran.
+- Melacak pesanan melalui menu Pesanan Saya.
+- Membatalkan pesanan yang masih menunggu pembayaran; stok akan dikembalikan ke sistem.
+- Melihat status pengantaran hingga makanan diterima.
+
+### 4. Penerima Manfaat atau Panti
+
+Role ini ditujukan untuk panti asuhan, komunitas sosial, atau penerima manfaat yang membutuhkan bantuan pangan.
+
+- Melihat donasi Tier 2 yang tersedia di sekitar lokasi panti.
+- Melihat jarak, stok, dan informasi merchant penyumbang.
+- Mengklaim makanan gratis dengan menentukan jumlah penerima.
+- Memakai kuota klaim mingguan agar pembagian donasi tetap teratur.
+- Membeli makanan dengan harga sosial jika tersedia.
+- Menambahkan catatan untuk membantu proses pengantaran.
+- Melihat riwayat klaim dan status pengiriman sampai donasi diterima.
+
+### 5. Kurir Relawan atau Penjemput
+
+Kurir menghubungkan merchant, konsumen, panti, dan fasilitas pengolah energi di lapangan.
+
+- Melihat daftar misi pengantaran yang masih terbuka.
+- Memfilter misi berdasarkan jenis pengantaran.
+- Mengambil misi yang ingin dikerjakan.
+- Melihat titik penjemputan, tujuan, jarak, dan rute perjalanan.
+- Memperbarui status perjalanan dari siap, menjemput, sampai mengantar.
+- Memindai QR Code handover untuk memastikan barang diambil dari pihak yang benar.
+- Melihat misi yang sudah selesai dan menghitung pendapatan kurir.
+
+### 6. Mitra Pengolah Limbah dan Energi
+
+Mitra pengolah energi menerima makanan yang sudah masuk Tier 3 dan mengubahnya menjadi sesuatu yang bermanfaat bagi lingkungan.
+
+- Melihat daftar limbah organik Tier 3 pada peta.
+- Melihat jarak fasilitas ke lokasi merchant dan jumlah stok yang tersedia.
+- Memilih jumlah limbah yang ingin diklaim.
+- Melihat perkiraan berat limbah, potensi biogas, potensi maggot, dan CO2e yang dapat dicegah.
+- Menjadwalkan pickup melalui kurir mitra secara gratis.
+- Melihat riwayat pemesanan dan status pengiriman limbah.
+- Menggunakan QR handover saat limbah tiba dan QR verifikasi saat limbah diterima fasilitas.
+
+### Alur Singkat Antar-Role
+
+Merchant mengunggah makanan surplus lalu memilih jalurnya. Konsumen atau panti dapat membeli atau mengklaim makanan tersebut, sedangkan mitra energi dapat mengambil makanan yang sudah masuk Tier 3. Setelah pesanan dibuat, sistem menerbitkan misi untuk kurir. Kurir mengambil dan mengantar barang, kemudian QR Code mencatat proses serah terima sampai selesai.
+
 
 
 ## ✨ Fitur Unggulan
@@ -56,23 +138,43 @@ Platform ini menghadirkan model pengelolaan sisa makanan berbasis role dan alur 
 
 
 
-## 📸 Demo & Screenshot
+## 📸 Screenshot Aplikasi
 
-### Live Demo
+### Dashboard Admin
 
-🔗 **Coming Soon**
+![Dashboard Admin](public/screenshots/admin.png)
 
-### Screenshot Aplikasi
+*Contoh tampilan pengelolaan pengguna dan role oleh admin.*
 
-<div align="center">
-  <img src="https://placehold.co/1200x600?text=Food+Waste+Platform" alt="Mockup antarmuka Food Waste Management Platform" width="800"/>
-  <p><em>Mockup antarmuka utama platform Food Waste Management Platform</em></p>
-</div>
+### Dashboard Merchant
 
-### Video Demo
+![Dashboard Merchant](public/screenshots/merchant.png)
 
-📹 **TBD**
+*Contoh tampilan pengelolaan makanan surplus, tier, stok, dan QR handover.*
 
+### Dashboard Konsumen Umum
+
+![Dashboard Konsumen Umum](public/screenshots/konsumen-umum.png)
+
+*Contoh tampilan pencarian makanan diskon, checkout, dan pelacakan pesanan.*
+
+### Dashboard Panti atau Penerima Manfaat
+
+![Dashboard Panti](public/screenshots/panti.png)
+
+*Contoh tampilan pencarian donasi, klaim makanan, kuota, dan riwayat pengiriman.*
+
+### Dashboard Kurir
+
+![Dashboard Kurir](public/screenshots/kurir.png)
+
+*Contoh tampilan daftar misi, peta rute, status perjalanan, dan pendapatan.*
+
+### Dashboard Pengolah Energi
+
+![Dashboard Pengolah Energi](public/screenshots/energi.png)
+
+*Contoh tampilan klaim limbah Tier 3, estimasi dampak, jadwal pickup, dan QR verifikasi.*
 
 ## 🛠️ Teknologi
 
@@ -184,11 +286,9 @@ Project ini menggunakan Next.js, React, TypeScript, Tailwind CSS, Supabase, Leaf
 #### 1. Clone repository
 
 ```bash
-git clone https://github.com/your-username/food-waste-management-platform.git
-cd food-waste-management-platform
+git clone https://github.com/MieGantenk/Itechno_cup_CTRL_S_SMKIT_ASSYIFA.git
+cd pangan-cerdas
 ```
-
-Jika project sudah diunduh sebagai file ZIP, cukup buka terminal di folder project lalu jalankan perintah berikutnya.
 
 #### 2. Install dependencies
 
@@ -202,13 +302,10 @@ Buat file bernama `.env.local` di folder utama project. Jangan upload file ini k
 
 ```env
 # URL project Supabase
-NEXT_PUBLIC_SUPABASE_URL="https://project-id.supabase.co"
+NEXT_PUBLIC_SUPABASE_URL="https://rxcfslvuqdkfydyvgvjp.supabase.co"
 
 # Anon/public key dari Supabase
-NEXT_PUBLIC_SUPABASE_ANON_KEY="your-supabase-anon-key"
-
-# API key Google Maps (opsional untuk menjalankan halaman lain)
-NEXT_PUBLIC_GOOGLE_MAPS_API_KEY="your-google-maps-api-key"
+NEXT_PUBLIC_SUPABASE_ANON_KEY="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJ4Y2ZzbHZ1cWRrZnlkeXZndmpwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyNDIwNjIsImV4cCI6MjEwMDgxODA2Mn0.mFvHvjTM6O09Zi5K3W1StNUy7jZEZcxB5keuC3_RHJM"
 ```
 
 Nilai Supabase dapat ditemukan di **Supabase Dashboard > Project Settings > API**. Gunakan **Project URL** dan **anon public key**. Jangan gunakan `service_role key` di browser.

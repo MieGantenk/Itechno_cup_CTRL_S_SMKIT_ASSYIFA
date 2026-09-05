@@ -680,7 +680,7 @@ export default function HalamanKlasifikasiPangan() {
                 ) : (
                   <>
                     <Cpu className="w-5 h-5 group-hover:rotate-6 transition-transform" />
-                    Analisis Jalur Pangan dengan AI
+                    Analisis Tier Pangan
                     <ChevronRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                   </>
                 )}

@@ -242,6 +242,7 @@ function ModalKlaimLimbah({ item, lokasiFasilitas, onClose, onSukses, kirimToast
   const berat = typeof item.stokTersedia === 'number' ? item.stokTersedia : 0;
   const [jumlahPcs, setJumlahPcs] = useState(1);
   const stokMaksimal = Math.max(1, Math.floor(berat));
+  const upahKurir = calculateCourierPay('tier3', jumlahPcs, Math.max(0.5, Number(item.jarakKm) || 0.5));
 
   const prosesKlaim = async () => {
     setSedangProses(true);
@@ -249,14 +250,12 @@ function ModalKlaimLimbah({ item, lokasiFasilitas, onClose, onSukses, kirimToast
       // Buat pesanan terlebih dahulu, lalu tawarkan pickup kepada kurir.
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Sesi login tidak ditemukan.');
-      const upahKurir = calculateCourierPay('tier3', jumlahPcs, Math.max(0.5, Number(item.jarakKm) || 0.5));
       const { data: pesanan, error: errorPesanan } = await supabase.from('pesanan').insert([{
         makanan_id: item.id,
         konsumen_id: user.id,
         konsumen_email: user.email,
         konsumen_nama: `Fasilitas Energi (${jumlahPcs} pcs)`,
         jumlah: jumlahPcs,
-        harga_produk: 0,
         upah_kurir: upahKurir,
         total_harga: upahKurir,
         status: 'dibayar',
@@ -366,6 +365,22 @@ function ModalKlaimLimbah({ item, lokasiFasilitas, onClose, onSukses, kirimToast
                 </div>
               </div>
 
+              {/* Ringkasan biaya pickup dan upah kurir. */}
+              <div className="space-y-2 p-4 bg-slate-50 dark:bg-slate-800/50 rounded-2xl border border-slate-200 dark:border-slate-700">
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600 dark:text-slate-400">Jumlah pickup</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{jumlahPcs} pcs</span>
+                </div>
+                <div className="flex justify-between text-sm">
+                  <span className="text-slate-600 dark:text-slate-400">Upah kurir</span>
+                  <span className="font-bold text-slate-900 dark:text-white">{formatRupiah(upahKurir)}</span>
+                </div>
+                <div className="border-t border-slate-200 dark:border-slate-700 pt-2 flex justify-between">
+                  <span className="font-black text-slate-900 dark:text-white">Total</span>
+                  <span className="font-black text-xl text-cyan-600 dark:text-cyan-400">{formatRupiah(upahKurir)}</span>
+                </div>
+              </div>
+
               {/* Catatan */}
               <div>
                 <label className="block text-xs font-black uppercase tracking-widest text-slate-600 dark:text-slate-400 mb-2">Catatan Pickup (Opsional)</label>
@@ -376,7 +391,7 @@ function ModalKlaimLimbah({ item, lokasiFasilitas, onClose, onSukses, kirimToast
               {/* Info alur */}
               <div className="flex items-center gap-2 p-3 bg-gradient-to-r from-cyan-50 to-blue-50 dark:from-cyan-950/30 dark:to-blue-950/30 rounded-2xl border border-cyan-200 dark:border-cyan-800/50">
                 <Truck className="w-4 h-4 text-cyan-600 dark:text-cyan-400 shrink-0" />
-                <p className="text-xs text-slate-700 dark:text-slate-300">Kurir mitra menjemput {jumlahPcs} pcs dari resto dan mengantar ke fasilitas Anda. <strong className="text-cyan-600 dark:text-cyan-400">Gratis biaya pickup.</strong></p>
+                <p className="text-xs text-slate-700 dark:text-slate-300">Kurir mitra menjemput {jumlahPcs} pcs dari resto dan mengantar ke fasilitas Anda. <strong className="text-cyan-600 dark:text-cyan-400">Upah kurir {formatRupiah(upahKurir)}.</strong></p>
               </div>
 
               {/* Tombol klaim */}
@@ -658,7 +673,10 @@ export default function DashboardEnergi() {
         .order('created_at', { ascending: false });
       if (error) return;
       if (data) {
-        setDaftarJadwal((data as unknown as BarisJadwal[]).map((p) => ({
+        const jadwalEnergi = (data as unknown as BarisJadwal[]).filter((p) =>
+          String(p.konsumen_nama || '').startsWith('Fasilitas Energi (')
+        );
+        setDaftarJadwal(jadwalEnergi.map((p) => ({
           id: p.id,
           limbahId: p.makanan_id,
           namaLimbah: p.makanan_surplus?.nama_makanan || 'Limbah',
@@ -848,22 +866,22 @@ export default function DashboardEnergi() {
                 <p className="text-xs text-cyan-50 mt-1 flex items-center gap-1.5"><Navigation className="w-3.5 h-3.5" />Lokasi Fasilitas: <strong className="text-white">{namaArea}</strong></p>
               </div>
             </div>
-            <div className="flex items-center gap-3 w-full lg:w-auto">
-              <div className="grid grid-cols-3 gap-2 flex-1 lg:flex-none">
-                <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-center">
+            <div className="flex flex-wrap items-center justify-end gap-3 w-full lg:w-auto min-w-0">
+              <div className="grid grid-cols-3 gap-2 flex-1 min-w-0 lg:flex-none">
+                <div className="min-w-0 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-center">
                   <p className="text-xl font-black text-white">{statistik.total}</p>
                   <p className="text-[8px] font-bold uppercase tracking-wider text-cyan-100">Sumber Limbah</p>
                 </div>
-                <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-center">
+                <div className="min-w-0 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-center">
                   <p className="text-xl font-black text-white tabular-nums">{kgAnim}</p>
                   <p className="text-[8px] font-bold uppercase tracking-wider text-cyan-100">Kg Tersedia</p>
                 </div>
-                <div className="bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-center">
+                <div className="min-w-0 bg-white/15 backdrop-blur-sm border border-white/20 rounded-2xl p-3 text-center">
                   <p className="text-xl font-black text-white">{statistik.biogas.toFixed(1)}</p>
                   <p className="text-[8px] font-bold uppercase tracking-wider text-cyan-100">m³ Biogas</p>
                 </div>
               </div>
-              <button onClick={() => setBukaJadwal(true)} className="relative flex items-center gap-2 bg-white/95 hover:bg-white text-slate-900 font-bold px-4 py-3 rounded-2xl text-sm transition-all active:scale-95 cursor-pointer shadow-lg">
+              <button onClick={() => setBukaJadwal(true)} className="relative flex shrink-0 items-center gap-2 whitespace-nowrap bg-white/95 hover:bg-white text-slate-900 font-bold px-4 py-3 rounded-2xl text-sm transition-all active:scale-95 cursor-pointer shadow-lg">
                 <Database className="w-5 h-5 text-cyan-600" />
                 <span className="hidden sm:inline">Riwayat Pemesanan</span>
                 {jadwalAktif > 0 && (

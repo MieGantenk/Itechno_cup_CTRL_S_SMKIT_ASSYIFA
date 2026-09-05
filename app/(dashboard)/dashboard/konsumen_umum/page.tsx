@@ -45,7 +45,6 @@ interface PesananSaya {
   namaMakanan: string;
   namaResto: string;
   jumlah: number;
-  hargaProduk: number;
   upahKurir: number;
   totalHarga: number;
   status: StatusPesanan;
@@ -457,7 +456,7 @@ function ModalPesananSaya({ daftarPesanan, onClose, kirimToast, onMuatUlang }: {
                   <div className="flex items-start justify-between gap-3 mb-4">
                     <div className="min-w-0">
                       <p className="font-black text-slate-900 dark:text-white line-clamp-1">{p.namaMakanan}</p>
-                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.namaResto} • {p.jumlah} porsi • Produk {formatRupiah(p.hargaProduk)} • Kurir {formatRupiah(p.upahKurir)}</p>
+                      <p className="text-[11px] text-slate-500 dark:text-slate-400">{p.namaResto} • {p.jumlah} porsi • Kurir {formatRupiah(p.upahKurir)}</p>
                     </div>
                     <span className={`shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[10px] font-black ${cfg.warna} bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700`}>
                       <cfg.Icon className="w-3.5 h-3.5" />{cfg.label}
@@ -696,13 +695,16 @@ const muatData = useCallback(async () => {
         .order('created_at', { ascending: false });
       if (error) return;
       if (data) {
-        setDaftarPesanan(data.map((p: any) => ({
+        const pesananKhusus = (data as any[]).filter((p) => {
+          const namaPemesan = String(p.konsumen_nama || '');
+          return !namaPemesan.startsWith('Panti (') && !namaPemesan.startsWith('Fasilitas Energi (');
+        });
+        setDaftarPesanan(pesananKhusus.map((p: any) => ({
           id: p.id,
           makananId: p.makanan_id,
           namaMakanan: p.makanan_surplus?.nama_makanan || 'Pesanan',
           namaResto: p.makanan_surplus?.nama_resto || 'Restoran',
           jumlah: p.jumlah,
-          hargaProduk: Number(p.harga_produk) || 0,
           upahKurir: Number(p.upah_kurir) || 0,
           totalHarga: p.total_harga,
           status: p.status,
@@ -822,7 +824,6 @@ const muatData = useCallback(async () => {
           konsumen_email: user.email,
           konsumen_nama: user.user_metadata?.full_name || 'Konsumen Umum',
           jumlah,
-          harga_produk: totalHarga,
           upah_kurir: upahKurir,
           total_harga: totalHarga + upahKurir,
           status: 'dibayar',

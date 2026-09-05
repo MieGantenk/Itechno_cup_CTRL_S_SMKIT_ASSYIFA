@@ -204,7 +204,6 @@ function ModalKlaimDonasi({ item, sisaKuota, onClose, onSukses, kirimToast }: {
           konsumen_email: user.email,
           konsumen_nama: `Panti (${jumlahPenerima} penerima)`,
           jumlah: 1,
-          harga_produk: 0,
           upah_kurir: upahKurir,
           total_harga: upahKurir,
           status: 'dibayar',
@@ -373,9 +372,9 @@ function ModalBeliHargaSosial({ item, sisaKuota, onClose, onSukses, kirimToast }
   const kuotaHabis = sisaKuota <= 0;
   // Gunakan harga khusus panti, atau hitung 10% dari harga asli sebagai cadangan.
   const hargaSosial = item.hargaSosial || calculateSocialPrice(item.hargaAsli || 25000);
-  const hargaProduk = hargaSosial * jumlah;
+  const totalHargaMakanan = hargaSosial * jumlah;
   const upahKurir = calculateCourierPay('tier1', jumlah, item.jarakKm);
-  const totalHarga = hargaProduk + upahKurir;
+  const totalHarga = totalHargaMakanan + upahKurir;
 
   const kunciDanBayar = async () => {
     if (kuotaHabis) {
@@ -413,7 +412,6 @@ function ModalBeliHargaSosial({ item, sisaKuota, onClose, onSukses, kirimToast }
           konsumen_email: user.email,
           konsumen_nama: `Panti (Harga Sosial - ${jumlah} porsi)`,
           jumlah,
-          harga_produk: hargaProduk,
           upah_kurir: upahKurir,
           total_harga: totalHarga,
           status: 'menunggu_pembayaran',
@@ -870,8 +868,9 @@ export default function DashboardPanti() {
         .order('created_at', { ascending: false });
       if (error) return;
       if (data) {
-        // Ambil hanya klaim milik panti yang sedang login.
-        const daftar = data.map((p: any) => ({
+        // Ambil hanya klaim yang dibuat dari alur panti.
+        const klaimPanti = data.filter((p: any) => String(p.konsumen_nama || '').startsWith('Panti ('));
+        const daftar = klaimPanti.map((p: any) => ({
           id: p.id,
           makananId: p.makanan_id,
           namaMakanan: p.makanan_surplus?.nama_makanan || 'Pesanan',
@@ -884,7 +883,7 @@ export default function DashboardPanti() {
         }));
         setDaftarKlaim(daftar);
         const awalMinggu = dapatkanAwalMinggu().toISOString();
-        const klaimAktif = data.filter((p: any) => p.status !== 'dibatalkan' && new Date(p.created_at) >= new Date(awalMinggu));
+        const klaimAktif = klaimPanti.filter((p: any) => p.status !== 'dibatalkan' && new Date(p.created_at) >= new Date(awalMinggu));
         setKlaimMingguIni(klaimAktif.length);
       }
     } catch (err) {
