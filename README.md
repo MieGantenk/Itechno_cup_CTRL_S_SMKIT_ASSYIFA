@@ -116,10 +116,55 @@ Mitra pengolah energi menerima makanan yang sudah masuk Tier 3 dan mengubahnya m
 - Melihat riwayat pemesanan dan status pengiriman limbah.
 - Menggunakan QR handover saat limbah tiba dan QR verifikasi saat limbah diterima fasilitas.
 
-### Alur Singkat Antar-Role
+## Alur Aplikasi
 
-Merchant mengunggah makanan surplus lalu memilih jalurnya. Konsumen atau panti dapat membeli atau mengklaim makanan tersebut, sedangkan mitra energi dapat mengambil makanan yang sudah masuk Tier 3. Setelah pesanan dibuat, sistem menerbitkan misi untuk kurir. Kurir mengambil dan mengantar barang, kemudian QR Code mencatat proses serah terima sampai selesai.
+### 1. Pengguna membuat akun
 
+Pengguna melakukan registrasi dengan email dan kata sandi. Setelah berhasil, pengguna masuk ke proses onboarding untuk memilih role dan melengkapi nama, nomor telepon, alamat, serta informasi tambahan yang sesuai dengan role-nya.
+
+Onboarding juga dapat mengambil lokasi perangkat. Koordinat tersebut diterjemahkan menjadi alamat menggunakan reverse geocoding OpenStreetMap agar lokasi lebih mudah dipahami.
+
+### 2. Sistem menentukan akses
+
+Setiap role memiliki dashboard dan halaman yang berbeda. Middleware memeriksa sesi Supabase, membaca role dari profil, lalu mengarahkan pengguna ke halaman yang sesuai. Pengguna yang belum melengkapi profil diarahkan kembali ke onboarding.
+
+Dengan begitu, merchant tidak masuk ke halaman kurir, dan pengguna umum tidak dapat membuka halaman admin secara langsung.
+
+### 3. Merchant memasukkan makanan surplus
+
+Merchant mengisi nama makanan, jumlah stok, kondisi makanan, harga jika akan dijual, dan lokasi. Nama usaha dapat diambil dari profil sehingga tidak perlu ditulis berulang kali.
+
+Merchant dapat memakai halaman **Klasifikasi Tier** untuk mendapatkan rekomendasi jalur makanan. Hasil klasifikasi dapat disimpan ke Supabase dan kemudian muncul di dashboard serta peta.
+
+### 4. Makanan masuk ke salah satu jalur
+
+| Tier | Jalur | Penjelasan |
+| --- | --- | --- |
+| **Tier 1** | Marketplace surplus | Makanan yang masih sangat baik ditawarkan dengan harga diskon untuk konsumen umum. |
+| **Tier 2** | Donasi | Makanan yang masih layak konsumsi disalurkan kepada panti atau penerima manfaat. |
+| **Tier 3** | Bio-energi | Sisa organik yang tidak lagi cocok untuk dijual atau didonasikan diarahkan ke mitra pengolah. |
+
+Klasifikasi di aplikasi menggunakan kondisi makanan sebagai dasar rekomendasi: sangat baik diarahkan ke Tier 1, layak konsumsi ke Tier 2, dan kondisi yang tidak cocok untuk konsumsi ke Tier 3.
+
+### 5. Konsumen atau penerima manfaat membuat pesanan
+
+Konsumen umum dapat membeli makanan Tier 1. Panti atau penerima manfaat dapat mencari dan mengklaim makanan Tier 2. Sistem mengunci stok saat pesanan dibuat agar stok yang sama tidak dipesan oleh dua pihak sekaligus.
+
+Pesanan yang belum diselesaikan dapat dibatalkan sesuai statusnya. Saat pesanan kedaluwarsa atau dibatalkan, stok dapat dikembalikan sehingga tetap tersedia untuk alur berikutnya.
+
+### 6. Sistem membuat misi pengantaran
+
+Setelah pesanan atau klaim dibuat, informasi pengantaran disimpan sebagai misi kurir. Misi memuat titik jemput, tujuan, jenis pengantaran, dan data pesanan yang terkait.
+
+Kurir dapat melihat misi yang masih terbuka, mengambil misi, memperbarui status perjalanan, lalu menyelesaikan pengantaran.
+
+### 7. Serah terima dicatat dengan QR Code
+
+QR Code digunakan sebagai identitas proses handover antara merchant, kurir, dan penerima. Tahapan pengambilan dan pengiriman menjadi lebih mudah dilacak karena setiap pihak memiliki titik konfirmasi yang jelas.
+
+### 8. Data dan dampak dapat dipantau
+
+Data makanan, pesanan, misi kurir, pengguna, serta statusnya tersimpan di Supabase. Peta dan dashboard membaca data tersebut sehingga perubahan baru dapat ditampilkan tanpa harus mengandalkan pencatatan manual.
 
 
 ## ✨ Fitur Unggulan
@@ -134,7 +179,48 @@ Merchant mengunggah makanan surplus lalu memilih jalurnya. Konsumen atau panti d
 | **QR Code & OTP Handover** | Setiap proses penjemputan dan penyerahan barang dapat diverifikasi melalui QR Code serta OTP untuk memastikan keamanan transaksi. | Meningkatkan akurasi pencatatan dan mengurangi potensi kesalahan penyerahan. |
 | **Automasi Status & Cron Job** | Sistem secara otomatis mengubah item yang melewati batas waktu kedaluwarsa menjadi Tier 3 tanpa intervensi manual. | Mengurangi beban administrasi dan memastikan alur kerja tetap konsisten. |
 
-### Fitur Tambahan
+## Fitur Pendukung
+
+### Peta spasial dan pencarian lokasi
+
+Halaman **Peta Spasial** menampilkan makanan surplus yang memiliki koordinat valid pada peta Leaflet berbasis OpenStreetMap. Pengguna dapat:
+
+- mencari berdasarkan nama makanan atau alamat;
+- memfilter tampilan berdasarkan Tier 1, Tier 2, dan Tier 3;
+- memilih marker untuk melihat detail makanan;
+- memusatkan peta ke lokasi makanan terpilih;
+- menggunakan lokasi perangkat sebagai pusat peta;
+- melihat total titik, volume stok, dan jumlah item per tier;
+- menerima item baru tanpa refresh ketika ada data baru di database.
+
+### Klasifikasi makanan berbasis kondisi
+
+Halaman **Klasifikasi Tier** menyediakan form yang membantu merchant menentukan jalur makanan. Hasilnya menampilkan rekomendasi tier, deskripsi alasan, aksi berikutnya, serta estimasi dampak seperti porsi terselamatkan, penerima manfaat, biogas, dan CO2e yang dihindari.
+
+Klasifikasi ini merupakan rekomendasi berbasis aturan aplikasi, bukan model machine learning. Setelah ditinjau merchant, hasilnya dapat disimpan sebagai data makanan surplus.
+
+### Autentikasi dan perlindungan halaman
+
+- Registrasi dan login menggunakan Supabase Auth.
+- Dukungan callback autentikasi untuk proses OAuth.
+- Sesi pengguna dipertahankan melalui cookie Supabase SSR.
+- Middleware melindungi halaman yang membutuhkan login.
+- Akses halaman diarahkan berdasarkan role.
+- Pengguna tanpa profil lengkap diarahkan ke onboarding.
+- Akun dengan status pending memiliki alur akses tersendiri.
+- Logout menggunakan modal konfirmasi dan notifikasi hasil proses.
+
+### Profil dan onboarding
+
+Pengguna dapat mengisi atau memperbarui data profil, melihat role yang dimiliki, serta menyimpan informasi kontak dan alamat. Progress bar pada onboarding membantu pengguna mengetahui kelengkapan data sebelum mengirim formulir.
+
+### Notifikasi dan pengalaman antarmuka
+
+Aplikasi menyediakan toast untuk memberi tahu pengguna ketika proses berhasil, gagal, atau membutuhkan perhatian. Beberapa halaman juga memiliki loading state, animasi perpindahan, modal konfirmasi, serta layout responsif untuk desktop dan perangkat mobile.
+
+### Tema tampilan
+
+Tema terang dan gelap tersedia melalui `next-themes`. Pengguna dapat mengganti tema dari shell aplikasi tanpa mengubah alur kerja utama.
 
 
 
