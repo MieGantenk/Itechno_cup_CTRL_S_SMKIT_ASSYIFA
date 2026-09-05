@@ -373,7 +373,7 @@ Project ini menggunakan Next.js, React, TypeScript, Tailwind CSS, Supabase, Leaf
 
 ```bash
 git clone https://github.com/MieGantenk/Itechno_cup_CTRL_S_SMKIT_ASSYIFA.git
-cd pangan-cerdas
+cd Itechno_cup_CTRL_S_SMKIT_ASSYIFA
 ```
 
 #### 2. Install dependencies
