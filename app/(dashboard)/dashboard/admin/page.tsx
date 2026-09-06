@@ -1,4 +1,5 @@
 'use client';
+export const dynamic = 'force-dynamic';
 
 import React, { useMemo, useState, useEffect } from 'react';
 import { createClient } from '@/app/utils/supabase/client'; // Sesuaikan path helper supabase client Anda
